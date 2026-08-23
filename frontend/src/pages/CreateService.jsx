@@ -4,6 +4,7 @@ import { FiArrowLeft, FiX } from 'react-icons/fi';
 import toast from 'react-hot-toast';
 import api from '../services/api';
 import Navbar from '../components/Navbar';
+import { GradientBadge, PageContainer, PageShell } from '../components/ui';
 
 const CATEGORIES = ['coding','design','editing','notes','tutoring','other'];
 
@@ -18,11 +19,25 @@ const CreateService = () => {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!isEdit) return;
-    api.get(`/services/${id}`).then(r => {
-      const { title, description, category, price, deliveryDays, tags } = r.data;
-      setForm({ title, description, category, price, deliveryDays, tags });
-    }).catch(() => navigate('/marketplace'));
+    if (!id) return;
+    api.get(`/services/${id}`)
+      .then(r => {
+        const svc = r.data;
+        if (svc && svc._id) {
+          setForm({
+            title: svc.title || '',
+            description: svc.description || '',
+            category: svc.category || 'coding',
+            price: svc.price || '',
+            deliveryDays: svc.deliveryDays || 3,
+            tags: Array.isArray(svc.tags) ? svc.tags : []
+          });
+        }
+      })
+      .catch(err => {
+        console.error('Failed to load service:', err);
+        navigate('/marketplace');
+      });
   }, [id, isEdit, navigate]);
 
   const set = (k, v) => setForm(p => ({ ...p, [k]: v }));
@@ -37,7 +52,10 @@ const CreateService = () => {
 
   const onSubmit = async e => {
     e.preventDefault();
-    if (!form.title || !form.description || !form.price) return toast.error('Fill required fields');
+    if (!form.title || !form.description || !form.price)
+      return toast.error('Fill all required fields');
+    if (Number(form.price) <= 0)
+      return toast.error('Price must be greater than 0');
     setLoading(true);
     try {
       if (isEdit) {
@@ -49,20 +67,22 @@ const CreateService = () => {
       }
       navigate('/marketplace');
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed');
+      console.error('Submit error:', err);
+      toast.error(err.response?.data?.message || 'Failed to save service');
     } finally { setLoading(false); }
   };
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <PageShell>
       <Navbar />
-      <div className="max-w-2xl mx-auto px-4 pt-24 pb-12">
+      <PageContainer className="max-w-3xl">
         <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-gray-500 hover:text-white text-sm mb-6 transition-colors">
           <FiArrowLeft size={14}/> Back
         </button>
 
         <div className="card">
-          <h1 className="text-xl font-semibold text-white mb-6">
+          <GradientBadge>{isEdit ? 'Service studio' : 'New listing'}</GradientBadge>
+          <h1 className="mb-6 mt-4 text-2xl font-semibold text-white">
             {isEdit ? 'Edit Service' : 'List a New Service'}
           </h1>
 
@@ -130,8 +150,8 @@ const CreateService = () => {
             </button>
           </form>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </PageShell>
   );
 };
 

@@ -7,6 +7,7 @@ import useAuth from '../hooks/useAuth';
 import Navbar from '../components/Navbar';
 import StarRating from '../components/StarRating';
 import ReviewSection from '../components/ReviewSection';
+import { PageContainer, PageShell } from '../components/ui';
 
 const CATEGORY_COLORS = {
   coding:'text-blue-400', design:'text-pink-400', editing:'text-green-400',
@@ -22,9 +23,16 @@ const ServiceDetail = () => {
   const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
+    if (!id) return;
     api.get(`/services/${id}`)
-      .then(r => setService(r.data))
-      .catch(() => navigate('/marketplace'))
+      .then(r => {
+        const svc = r.data;
+        if (svc && svc._id) setService(svc);
+      })
+      .catch(err => {
+        console.error('Failed to load service:', err);
+        navigate('/marketplace');
+      })
       .finally(() => setLoading(false));
   }, [id, navigate]);
 
@@ -35,7 +43,11 @@ const ServiceDetail = () => {
       await api.delete(`/services/${id}`);
       toast.success('Service deleted');
       navigate('/marketplace');
-    } catch { toast.error('Failed'); setDeleting(false); }
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error(err.response?.data?.message || 'Failed to delete');
+      setDeleting(false);
+    }
   };
 
   if (loading) return (
@@ -49,9 +61,9 @@ const ServiceDetail = () => {
   const isOwner = user?._id === service.seller?._id;
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <PageShell>
       <Navbar />
-      <div className="max-w-5xl mx-auto px-4 pt-24 pb-12">
+      <PageContainer className="max-w-5xl">
         <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-gray-500 hover:text-white text-sm mb-6 transition-colors">
           <FiArrowLeft size={14} /> Back
         </button>
@@ -77,7 +89,7 @@ const ServiceDetail = () => {
               )}
             </div>
 
-            <h1 className="text-2xl font-semibold text-white leading-snug">{service.title}</h1>
+            <h1 className="text-3xl font-semibold text-white leading-snug">{service.title}</h1>
 
             <div className="flex items-center gap-4 flex-wrap">
               <StarRating value={service.rating} />
@@ -151,8 +163,8 @@ const ServiceDetail = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </PageShell>
   );
 };
 

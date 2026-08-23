@@ -16,8 +16,13 @@ const ReviewSection = ({ targetId, targetType }) => {
     setLoading(true);
     try {
       const { data } = await api.get(`/reviews?targetId=${targetId}&targetType=${targetType}`);
-      setReviews(data);
-    } finally { setLoading(false); }
+      setReviews(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
   }, [targetId, targetType]);
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);

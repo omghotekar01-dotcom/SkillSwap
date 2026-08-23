@@ -1,0 +1,6 @@
+1|AI Tutoring|High-quality mentoring for college AI projects|coding|750|2|AI,Tutoring
+2|Note Sharing|Summary notes for engineering and computer science|notes|399|1|Notes,Summary
+3|Web Design Help|Create landing pages, portfolios, and app UI|design|1200|3|Web,Design
+4|Debug Support|Fix bugs and optimize C, Python, and JS code|coding|650|2|Debug,Code
+5|service one|d|c|100|5|t
+6|My Service |My description |mycat |250|4|TagA,TagB 

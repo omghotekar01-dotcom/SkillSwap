@@ -1,1 +1,57 @@
-[]
+[
+  {
+    "id": "1000001",
+    "name": "Demo Student",
+    "email": "student@demo.com",
+    "password": "$2a$10$nyONlq51rGTEflZupYAkHeU0KfgfEfdNfoHI2qG4/LJvzTkkhXaBy",
+    "role": "student",
+    "college": "Demo College",
+    "avatar": "",
+    "bio": "Demo student account for testing",
+    "skills": [
+      "tutoring",
+      "note-sharing"
+    ]
+  },
+  {
+    "id": "1000002",
+    "name": "Demo Admin",
+    "email": "admin@demo.com",
+    "password": "$2a$10$35aP/veQYbA.BZSIp0ZEWOSYWAXUj16xqj/QpaRyrTMxlGRPJeZZ.",
+    "role": "admin",
+    "college": "Demo College",
+    "avatar": "",
+    "bio": "Demo admin account for testing",
+    "skills": []
+  },
+  {
+    "id": "17793697005815372",
+    "_id": "17793697005815372",
+    "name": "OM GHOTEKAR",
+    "email": "om.1251030180@vit.edu",
+    "password": "$2a$10$7TIRQk2shjJjQa19y0pAaOLwTvGErGX0uYe.Znvra.1jTu2ozaPdW",
+    "role": "student",
+    "college": "VIT",
+    "avatar": "http://localhost:5000/uploads/avatars/1779384779266-Om_Ghotekar.jpg",
+    "bio": "",
+    "skills": [],
+    "interests": [],
+    "semester": 1
+  },
+  {
+    "id": "177942902839410",
+    "_id": "177942902839410",
+    "name": "om",
+    "email": "omghotekar01@gmail.com",
+    "password": "$2a$10$tqxnLOitxGzYlFY3s0iSYe6DpqBN7I694V.Xb5mSnTf1bquYN7SwS",
+    "role": "student",
+    "college": "vit",
+    "semester": 1,
+    "interests": [
+      "AI"
+    ],
+    "avatar": "",
+    "bio": "",
+    "skills": []
+  }
+]

@@ -27,6 +27,8 @@ const toggleUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ message: 'Not found' });
+    if (String(req.user._id || req.user.id) === String(user._id || user.id))
+      return res.status(400).json({ message: 'Cannot modify your own account' });
     user.isActive = !user.isActive;
     await user.save();
     res.json({ isActive: user.isActive });
@@ -35,7 +37,11 @@ const toggleUser = async (req, res) => {
 
 const deleteUser = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    if (String(req.user._id || req.user.id) === String(user._id || user.id))
+      return res.status(400).json({ message: 'Cannot delete your own account' });
+    await user.remove();
     res.json({ message: 'User deleted' });
   } catch (err) { res.status(500).json({ message: err.message }); }
 };

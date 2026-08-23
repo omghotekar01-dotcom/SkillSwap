@@ -1,21 +1,70 @@
-﻿const jwt = require('jsonwebtoken');
-const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+
+let User = null;
+try {
+  User = require('../models/User');
+} catch {
+  User = null;
+}
+
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const USERS_FILE = path.join(DATA_DIR, 'fallbackUsers.json');
+const JWT_SECRET = process.env.JWT_SECRET || 'devsecret';
+const isProduction = process.env.NODE_ENV === 'production';
+if (isProduction && !process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET must be configured in production');
+}
+
+const readUsers = () => {
+  try {
+    return JSON.parse(fs.readFileSync(USERS_FILE, 'utf8') || '[]');
+  } catch {
+    return [];
+  }
+};
 
 const protect = async (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
-  if (!token) return res.status(401).json({ message: 'No token' });
+  const authHeader = String(req.headers.authorization || '').trim();
+  if (!authHeader.startsWith('Bearer ')) return res.status(401).json({ message: 'Authorization required' });
+  const token = authHeader.slice(7).trim();
+  if (!token) return res.status(401).json({ message: 'Authorization required' });
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'devsecret');
-    req.user = await User.findById(decoded.id).select('-password');
-    if (!req.user) return res.status(401).json({ message: 'User not found' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    let found = false;
+
+    if (User) {
+      try {
+        const dbUser = await User.findById(decoded.id).select('-password');
+        if (dbUser) {
+          req.user = dbUser;
+          found = true;
+        }
+      } catch {
+        // CastError or DB error — fall through to file-based.
+      }
+    }
+
+    if (!found) {
+      const users = readUsers();
+      const user = users.find(u => u.id === decoded.id || String(u._id) === decoded.id);
+      if (!user) return res.status(401).json({ message: 'User not found' });
+      req.user = { ...user };
+      delete req.user.password;
+    }
+
+    if (req.user.isActive === false) return res.status(403).json({ message: 'Account disabled' });
     next();
-  } catch {
-    res.status(401).json({ message: 'Invalid token' });
+  } catch (error) {
+    const message = error.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token';
+    res.status(401).json({ message });
   }
 };
 
 const adminOnly = (req, res, next) => {
-  if (req.user?.role !== 'admin') return res.status(403).json({ message: 'Admins only' });
+  if (!req.user) return res.status(401).json({ message: 'Authorization required' });
+  if (req.user.role !== 'admin') return res.status(403).json({ message: 'Admins only' });
   next();
 };
 

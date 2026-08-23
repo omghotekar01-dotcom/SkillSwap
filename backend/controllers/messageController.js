@@ -1,13 +1,15 @@
 const Message = require('../models/Message');
 const User = require('../models/User');
+const { isValidId, escapeRegExp } = require('../utils/helpers');
 
 const getRoomId = (a, b) => [a, b].sort().join('_');
 
 const getConversations = async (req, res) => {
   try {
     const userId = req.user._id.toString();
+    const escaped = escapeRegExp(userId);
     const msgs = await Message.aggregate([
-      { $match: { roomId: new RegExp(userId) } },
+      { $match: { roomId: { $regex: `(^|_)${escaped}(_|$)` } } },
       { $sort: { createdAt: -1 } },
       { $group: { _id: '$roomId', lastMessage: { $first: '$$ROOT' } } },
       { $replaceRoot: { newRoot: '$lastMessage' } }
@@ -26,6 +28,7 @@ const getConversations = async (req, res) => {
 
 const getMessages = async (req, res) => {
   try {
+    if (!isValidId(req.params.userId)) return res.status(400).json({ message: 'Invalid user id' });
     const roomId = getRoomId(req.user._id.toString(), req.params.userId);
     const messages = await Message.find({ roomId }).sort({ createdAt: 1 })
       .populate('sender', 'name avatar');
@@ -36,11 +39,15 @@ const getMessages = async (req, res) => {
 
 const sendMessage = async (req, res) => {
   try {
+    if (!isValidId(req.params.userId)) return res.status(400).json({ message: 'Invalid user id' });
+    const content = String(req.body.content || '').trim();
+    if (!content) return res.status(400).json({ message: 'Message content cannot be empty' });
+
     const roomId = getRoomId(req.user._id.toString(), req.params.userId);
     const message = await Message.create({
       sender: req.user._id,
       receiver: req.params.userId,
-      content: req.body.content,
+      content,
       roomId
     });
     await message.populate('sender', 'name avatar');

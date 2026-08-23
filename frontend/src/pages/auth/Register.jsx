@@ -4,7 +4,7 @@ import { FiUser, FiMail, FiLock, FiEye, FiEyeOff, FiBook, FiZap, FiCheck } from 
 import toast from 'react-hot-toast';
 import useAuth from '../../hooks/useAuth';
 
-const STEPS = ['Account', 'Profile', 'Done'];
+const STEPS = ['Account', 'Security', 'Profile'];
 
 const passwordStrength = pw => {
   let s = 0;
@@ -42,7 +42,7 @@ const Register = () => {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
-    name: '', email: '', password: '', confirm: '', college: '', skills: ''
+    name: '', email: '', password: '', confirm: '', college: '', skills: '', semester: 1, interests: ''
   });
 
   const onChange = e => setForm(p => ({ ...p, [e.target.name]: e.target.value }));
@@ -50,12 +50,15 @@ const Register = () => {
   const nextStep = e => {
     e.preventDefault();
     if (step === 0) {
-      if (!form.name || !form.email) return toast.error('Name and email required');
-      if (!/\S+@\S+\.\S+/.test(form.email)) return toast.error('Invalid email');
+      const name = String(form.name || '').trim();
+      const email = String(form.email || '').trim().toLowerCase();
+      if (!name || !email) return toast.error('Name and email required');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return toast.error('Invalid email');
+      setForm(p => ({ ...p, name, email }));
     }
     if (step === 1) {
       if (!form.password) return toast.error('Password required');
-      if (form.password.length < 6) return toast.error('Min 6 characters');
+      if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
       if (form.password !== form.confirm) return toast.error('Passwords do not match');
     }
     setStep(p => p + 1);
@@ -63,24 +66,54 @@ const Register = () => {
 
   const onSubmit = async e => {
     e.preventDefault();
+    if (!form.name || !form.email || !form.password || !form.confirm) {
+      return toast.error('Complete all account fields first');
+    }
+    if (form.password !== form.confirm) {
+      return toast.error('Passwords do not match');
+    }
     setLoading(true);
     try {
       const skillsArr = form.skills.split(',').map(s => s.trim()).filter(Boolean);
-      await register({ name: form.name, email: form.email, password: form.password, college: form.college, skills: skillsArr });
+      const interestsArr = form.interests.split(',').map(i => i.trim()).filter(Boolean);
+      await register({
+        name: form.name,
+        email: String(form.email).trim().toLowerCase(),
+        password: form.password,
+        college: String(form.college || '').trim(),
+        skills: skillsArr,
+        interests: interestsArr,
+        semester: Number(form.semester) || 1
+      });
       toast.success('Account created!');
       navigate('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed');
-      setStep(0);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute top-[-10%] right-[-10%] w-96 h-96 bg-violet-600/20 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
+    <div className="app-bg grid min-h-screen place-items-center p-4 lg:grid-cols-[0.95fr_1.05fr] lg:p-8">
+      <div className="hidden h-full w-full max-w-3xl flex-col justify-between rounded-[2rem] border border-white/10 bg-white/[0.06] p-10 shadow-2xl shadow-black/25 backdrop-blur-2xl lg:flex">
+        <Link to="/" className="flex items-center gap-3 text-white">
+          <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-violet-600">
+            <FiZap />
+          </div>
+          <span className="text-xl font-semibold">SkillSwap Campus</span>
+        </Link>
+        <div className="space-y-6">
+          <p className="badge-gradient w-fit">Launch your campus profile</p>
+          <h1 className="max-w-xl text-5xl font-semibold leading-tight text-white">Build reputation while sharing what you know.</h1>
+          <p className="max-w-lg text-slate-400">Create listings, upload academic resources, and connect with students who need your skills.</p>
+        </div>
+        <div className="grid grid-cols-3 gap-3">
+          {['XP growth', 'Skill chips', 'Seller profile'].map(item => (
+            <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-slate-300">{item}</div>
+          ))}
+        </div>
+      </div>
 
       <div className="w-full max-w-md relative z-10">
         {/* Logo */}
@@ -176,6 +209,18 @@ const Register = () => {
                   <FiBook className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500" />
                   <input name="college" value={form.college} onChange={onChange}
                     placeholder="MIT, Stanford, IIT…" className="input-field pl-10" />
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm text-gray-400 mb-1.5 block">Semester</label>
+                  <input name="semester" type="number" min="1" max="8" value={form.semester} onChange={onChange}
+                    className="input-field" placeholder="4" />
+                </div>
+                <div>
+                  <label className="text-sm text-gray-400 mb-1.5 block">Interests</label>
+                  <input name="interests" value={form.interests} onChange={onChange}
+                    className="input-field" placeholder="AI, web apps, event planning" />
                 </div>
               </div>
               <div>

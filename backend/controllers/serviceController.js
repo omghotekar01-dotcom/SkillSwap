@@ -1,5 +1,5 @@
 const Service = require('../models/Service');
-const { paginate } = require('../utils/helpers');
+const { paginate, isValidId } = require('../utils/helpers');
 
 const getServices = async (req, res) => {
   try {
@@ -21,8 +21,11 @@ const getServices = async (req, res) => {
 
     const { skip, limit: lim, page: pg } = paginate(null, page, limit);
     const [services, total] = await Promise.all([
-      Service.find(filter).populate('seller', 'name avatar rating college')
-        .sort(sortMap[sort] || { createdAt: -1 }).skip(skip).limit(lim),
+      Service.find(filter)
+        .select('title category price rating totalReviews seller createdAt')
+        .populate('seller', 'name avatar rating college')
+        .sort(sortMap[sort] || { createdAt: -1 }).skip(skip).limit(lim)
+        .lean(),
       Service.countDocuments(filter)
     ]);
 
@@ -32,6 +35,7 @@ const getServices = async (req, res) => {
 
 const getService = async (req, res) => {
   try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ message: 'Invalid service id' });
     const service = await Service.findById(req.params.id)
       .populate('seller', 'name avatar rating college bio skills totalReviews');
     if (!service) return res.status(404).json({ message: 'Not found' });
@@ -41,24 +45,46 @@ const getService = async (req, res) => {
 
 const createService = async (req, res) => {
   try {
-    const service = await Service.create({ ...req.body, seller: req.user._id });
+    const { title, description, category, price, deliveryDays, tags, images } = req.body;
+    if (!title || !description || !category || price == null)
+      return res.status(400).json({ message: 'Title, description, category, and price are required' });
+
+    const service = await Service.create({
+      title: String(title).trim(),
+      description: String(description).trim(),
+      category: String(category).trim(),
+      price: Number(price),
+      deliveryDays: Number(deliveryDays) || 3,
+      tags: Array.isArray(tags) ? tags : [],
+      images: Array.isArray(images) ? images : [],
+      seller: req.user._id
+    });
     res.status(201).json(service);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
 const updateService = async (req, res) => {
   try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ message: 'Invalid service id' });
     const service = await Service.findById(req.params.id);
     if (!service) return res.status(404).json({ message: 'Not found' });
     if (service.seller.toString() !== req.user._id.toString())
       return res.status(403).json({ message: 'Forbidden' });
-    const updated = await Service.findByIdAndUpdate(req.params.id, req.body, { new: true });
+
+    const allowed = ['title', 'description', 'category', 'price', 'deliveryDays', 'tags', 'images', 'isActive'];
+    const updates = {};
+    allowed.forEach(key => {
+      if (key in req.body) updates[key] = req.body[key];
+    });
+
+    const updated = await Service.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
     res.json(updated);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
 
 const deleteService = async (req, res) => {
   try {
+    if (!isValidId(req.params.id)) return res.status(400).json({ message: 'Invalid service id' });
     const service = await Service.findById(req.params.id);
     if (!service) return res.status(404).json({ message: 'Not found' });
     if (service.seller.toString() !== req.user._id.toString() && req.user.role !== 'admin')
@@ -70,7 +96,10 @@ const deleteService = async (req, res) => {
 
 const getMyServices = async (req, res) => {
   try {
-    const services = await Service.find({ seller: req.user._id }).sort({ createdAt: -1 });
+    const services = await Service.find({ seller: req.user._id })
+    .select('title category price isActive createdAt')
+    .sort({ createdAt: -1 })
+    .lean();
     res.json(services);
   } catch (err) { res.status(500).json({ message: err.message }); }
 };
