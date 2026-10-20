@@ -19,3 +19,6 @@ yarn-error.log*
 # Editor files
 .vscode/
 .DS_Store
+
+# Local fallback authentication data (never commit user records)
+backend/data/fallbackUsers.json
