@@ -1,40 +1,68 @@
-﻿# Skillswap Campus
+# SkillSwap Campus
 
-Monorepo structure for the Skillswap Campus project.
+SkillSwap Campus is a student-focused web application for sharing learning resources, finding peer services, and communicating with other students. The repository includes a React frontend, a Node.js backend, and a separate set of C programming exercises used for coursework.
 
-## C Demo Programs
+## Project at a glance
 
-This project includes a `c-programs/` folder with sample C programs demonstrating file handling and simple console utilities:
+The frontend has routes for service listings, notes, user profiles, messages, dashboards, and administration. The backend provides REST routes for authentication, notes, services, messaging, reviews, and uploads, with Socket.IO used for real-time messaging.
 
-- `notes_manager.c` — saves and lists notes using a text file.
-- `service_search.c` — writes sample service listings and performs a keyword search.
-- `sort_ratings.c` — sorts rating values and writes sorted output to a file.
-- `student_records.c` — creates and displays sample student records in CSV format.
+| Area | Technology |
+| --- | --- |
+| Frontend | React, Vite, React Router, Tailwind CSS |
+| Backend | Node.js, Express, Socket.IO |
+| Database | MongoDB through Mongoose, with a local file-based fallback for development |
+| Authentication | JWT-based demo/application authentication |
+| C coursework | Standalone terminal programs and Windows launchers |
 
-These files are intended as C-language demo examples for academic presentation.
+## Run the web application
 
-## Terminal C Mode
+You need Node.js and npm. Start the backend and frontend in separate terminals.
 
-A new terminal-based launcher is available at `run_terminal.bat`.
+**Backend**
 
-- Compile and run the C terminal app with `run_terminal.bat`.
-- If you prefer PowerShell, use `run_terminal.ps1`.
-- The launcher detects `gcc`, `clang`, or `cl` automatically.
+```powershell
+cd backend
+npm install
+npm run dev
+```
 
-The C terminal app provides:
-- notes manager (view and add notes)
-- service search demo
-- ratings sorter
-- student record viewer
-- website mode instructions
+The backend defaults to `http://localhost:5000`. It reads environment settings such as `PORT`, `MONGO_URI`, `JWT_SECRET`, and `CLIENT_URL` from its environment. For local work, configure these values privately; never use development tokens or demonstration credentials on an internet-facing deployment.
 
-A single entry point is available at `start.bat`.
-- Run `start.bat` from the repo root.
-- Choose option 1 for terminal C mode.
-- Choose option 2 to show website startup instructions.
+**Frontend**
 
-VS Code task support is also configured.
-- Run the `Build and Run Skillswap Terminal` task from the command palette.
-- Run `Run Skillswap Website Instructions` to see how to start the browser mode.
+```powershell
+cd frontend
+npm install
+npm run dev
+```
 
-The website remains unchanged. Use `run_website.bat` for instructions to start the frontend and backend in browser mode.
+Vite prints its local URL, usually `http://localhost:5173`. The API and allowed frontend origin must be configured consistently.
+
+To check that the frontend compiles, run `npm run build` inside `frontend/`. The backend defines `dev` and `start` scripts; there is no root-level monorepo test command.
+
+## Features and code navigation
+
+- `frontend/src/pages/` contains the main experiences: marketplace, notes, messages, profiles, dashboards, and admin views.
+- `frontend/src/App.jsx` maps the browser routes and applies protected-route wrappers.
+- `backend/routes/` contains API route modules.
+- `backend/controllers/` holds request handling and domain operations.
+- `backend/models/` defines the stored records.
+- `backend/server.js` configures Express, WebSocket messaging, and database/fallback startup.
+
+Some routes and features depend on data and local configuration. A page appearing in the navigation is not by itself evidence that a full production workflow is ready.
+
+## C programming exercises
+
+The `c-programs/` directory contains small examples for file handling, service searching, sorting ratings, and student records. These are independent of the React/Express application.
+
+On Windows, `run_terminal.bat` opens the C terminal workflow; `run_terminal.ps1` is the PowerShell alternative. `start.bat` provides a menu for terminal mode or website startup instructions.
+
+## Development status and safety
+
+This is an academic prototype. When MongoDB is unavailable, the backend can switch to a file-based authentication fallback with sample accounts. That mode is intended for local exploration only, **not production access control**. Do not deploy the fallback login or the development JWT settings publicly.
+
+The repository also contains development files and historical demo material. Review configuration and remove or rotate any exposed credentials before deployment. The public Git history may retain previously committed configuration even after a file is removed from the latest branch.
+
+## What to explore next
+
+For a code review, start with the route definitions in `frontend/src/App.jsx`, then follow the corresponding request handlers in `backend/routes/` and `backend/controllers/`. The C exercises can be reviewed separately as basic programming demonstrations.
