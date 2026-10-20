@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-The backend defaults to `http://localhost:5000`. It reads environment settings such as `PORT`, `MONGO_URI`, `JWT_SECRET`, and `CLIENT_URL` from its environment. For local work, configure these values privately; never use development tokens or demonstration credentials on an internet-facing deployment.
+The backend defaults to `http://localhost:5000`. It reads environment settings such as `PORT`, `MONGO_URI`, `JWT_SECRET`, and `CLIENT_URL` from its environment. For local work, copy `backend/.env.example` to `backend/.env` and replace the placeholder values. Keep `.env` untracked. If you previously pulled this repository with a tracked `backend/.env`, back up your local configuration before updating; this change removes that file from version control. Do not use development tokens or demonstration credentials on an internet-facing deployment.
 
 **Frontend**
 
